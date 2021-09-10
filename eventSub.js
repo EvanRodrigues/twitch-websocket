@@ -69,6 +69,8 @@ const setEventSub = async (accessToken, userId, subType) => {
         .catch((err) => {
             console.log(`Error: ${err.response.data.message}`);
         });
+
+    console.log(response.data);
 };
 
 init();
