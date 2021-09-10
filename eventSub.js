@@ -17,7 +17,7 @@ const init = async () => {
 
 //Gets an App Access Token from twitch for the application.
 const getAppToken = async () => {
-    const url = `https://id.twitch.tv/oauth2/token?client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=client_credentials&scope=channel:read:predictions`;
+    const url = `https://id.twitch.tv/oauth2/token?client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=client_credentials`;
 
     const response = await axios.post(url);
     const accessToken = await response.data.access_token;
