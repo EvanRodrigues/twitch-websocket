@@ -1,17 +1,16 @@
 const axios = require("axios");
-
 const CLIENT_ID = process.env.CLIENT_ID || require("./config/keys").CLIENT_ID;
 const CLIENT_SECRET =
     process.env.CLIENT_SECRET || require("./config/keys").CLIENT_SECRET;
 const EVENT_SUB_SECRET =
     process.env.EVENT_SUB_SECRET || require("./config/keys").EVENT_SUB_SECRET;
 
-//Deletes all active subs
+//Deletes all active subs for all users
 const deleteAllSubscriptions = async (accessToken, subs) => {
     const deleteURL = "https://api.twitch.tv/helix/eventsub/subscriptions?id=";
 
     for (const sub of subs) {
-        const response = await axios
+        await axios
             .delete(`${deleteURL}${sub.id}`, {
                 headers: {
                     "Client-ID": CLIENT_ID,
@@ -26,8 +25,6 @@ const deleteAllSubscriptions = async (accessToken, subs) => {
 
 //Gets all EventSub subscriptions
 const getAllSubscriptions = async (accessToken) => {
-    //TODO: Check for previously set up subscriptions before trying to create new subscriptions.
-
     const mySubsURL = "https://api.twitch.tv/helix/eventsub/subscriptions";
 
     const response = await axios.get(mySubsURL, {
@@ -37,25 +34,37 @@ const getAllSubscriptions = async (accessToken) => {
         },
     });
 
-    //This holds the userId for the subscription
-    // console.log(response.data.data[0].condition);
-
     return response.data.data;
+};
+
+//Checks if user has an active subscription to the EventSub type
+const hasActiveSub = (allSubs, userId, subType) => {
+    return allSubs.filter((sub) => {
+        sub.status === "enabled" &&
+            sub.condition.broadcaster_user_id === userId &&
+            sub.type === subType;
+    });
+};
+
+//Creates subscriptions to EventSub types that the user is not subscribed to.
+const setAllSubscriptions = async (allSubs, userId) => {
+    if (!hasActiveSub(allSubs, userId, "channel.prediction.begin"))
+        await setEventSub(accessToken, userId, "channel.prediction.begin");
+    if (!hasActiveSub(allSubs, userId, "channel.prediction.progress"))
+        await setEventSub(accessToken, userId, "channel.prediction.progress");
+    if (!hasActiveSub(allSubs, userId, "channel.prediction.end"))
+        await setEventSub(accessToken, userId, "channel.prediction.end");
 };
 
 //Calls the twitch API and gets all of the tokens and info required to set up a subscription with EventSub.
 const init = async () => {
     const accessToken = await getAppToken();
-
     const allSubs = await getAllSubscriptions(accessToken);
-    await deleteAllSubscriptions(accessToken, allSubs);
-
     const userId = await getBroadcasterUserId(accessToken, "doopian");
-    // const mikeId = await getBroadcasterUserId(accessToken, "saltemike");
+    const mikeId = await getBroadcasterUserId(accessToken, "saltemike");
 
-    await setEventSub(accessToken, userId, "channel.prediction.begin");
-    await setEventSub(accessToken, userId, "channel.prediction.progress");
-    await setEventSub(accessToken, userId, "channel.prediction.end");
+    await setAllSubscriptions(allSubs, userId);
+    await setAllSubscriptions(allSubs, mikeId);
 };
 
 //Gets an App Access Token from twitch for the application.
@@ -101,7 +110,7 @@ const setEventSub = async (accessToken, userId, subType) => {
         },
     };
 
-    const response = await axios
+    await axios
         .post(url, body, {
             headers: {
                 "Client-ID": CLIENT_ID,
