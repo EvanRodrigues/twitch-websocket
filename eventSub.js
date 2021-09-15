@@ -6,13 +6,56 @@ const CLIENT_SECRET =
 const EVENT_SUB_SECRET =
     process.env.EVENT_SUB_SECRET || require("./config/keys").EVENT_SUB_SECRET;
 
+//Deletes all active subs
+const deleteAllSubscriptions = async (accessToken, subs) => {
+    const deleteURL = "https://api.twitch.tv/helix/eventsub/subscriptions?id=";
+
+    for (const sub of subs) {
+        const response = await axios
+            .delete(`${deleteURL}${sub.id}`, {
+                headers: {
+                    "Client-ID": CLIENT_ID,
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            })
+            .catch((err) => {
+                console.log(`Error: ${err}`);
+            });
+    }
+};
+
+//Gets all EventSub subscriptions
+const getAllSubscriptions = async (accessToken) => {
+    //TODO: Check for previously set up subscriptions before trying to create new subscriptions.
+
+    const mySubsURL = "https://api.twitch.tv/helix/eventsub/subscriptions";
+
+    const response = await axios.get(mySubsURL, {
+        headers: {
+            "Client-ID": CLIENT_ID,
+            Authorization: `Bearer ${accessToken}`,
+        },
+    });
+
+    //This holds the userId for the subscription
+    // console.log(response.data.data[0].condition);
+
+    return response.data.data;
+};
+
 //Calls the twitch API and gets all of the tokens and info required to set up a subscription with EventSub.
 const init = async () => {
     const accessToken = await getAppToken();
+
+    const allSubs = await getAllSubscriptions(accessToken);
+    await deleteAllSubscriptions(accessToken, allSubs);
+
     const userId = await getBroadcasterUserId(accessToken, "doopian");
-    const mikeId = await getBroadcasterUserId(accessToken, "saltemike");
+    // const mikeId = await getBroadcasterUserId(accessToken, "saltemike");
 
     await setEventSub(accessToken, userId, "channel.prediction.begin");
+    await setEventSub(accessToken, userId, "channel.prediction.progress");
+    await setEventSub(accessToken, userId, "channel.prediction.end");
 };
 
 //Gets an App Access Token from twitch for the application.
@@ -69,8 +112,6 @@ const setEventSub = async (accessToken, userId, subType) => {
         .catch((err) => {
             console.log(`Error: ${err.response.data.message}`);
         });
-
-    console.log(response.data);
 };
 
-init();
+module.exports = { init };

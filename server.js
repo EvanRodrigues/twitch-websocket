@@ -16,3 +16,5 @@ app.use("/", (req, res) => {
 });
 
 app.listen(port);
+
+eventSub.init();
