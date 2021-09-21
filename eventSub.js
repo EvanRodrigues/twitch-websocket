@@ -40,14 +40,18 @@ const getAllSubscriptions = async (accessToken) => {
 //Checks if user has an active subscription to the EventSub type
 const hasActiveSub = (allSubs, userId, subType) => {
     return allSubs.filter((sub) => {
-        sub.status === "enabled" &&
+        return (
+            sub.status === "enabled" &&
             sub.condition.broadcaster_user_id === userId &&
-            sub.type === subType;
-    });
+            sub.type === subType
+        );
+    }).length === 0
+        ? false
+        : true;
 };
 
 //Creates subscriptions to EventSub types that the user is not subscribed to.
-const setAllSubscriptions = async (allSubs, userId) => {
+const setAllSubscriptions = async (accessToken, allSubs, userId) => {
     if (!hasActiveSub(allSubs, userId, "channel.prediction.begin"))
         await setEventSub(accessToken, userId, "channel.prediction.begin");
     if (!hasActiveSub(allSubs, userId, "channel.prediction.progress"))
@@ -63,8 +67,8 @@ const init = async () => {
     const userId = await getBroadcasterUserId(accessToken, "doopian");
     const mikeId = await getBroadcasterUserId(accessToken, "saltemike");
 
-    await setAllSubscriptions(allSubs, userId);
-    await setAllSubscriptions(allSubs, mikeId);
+    await setAllSubscriptions(accessToken, allSubs, userId);
+    await setAllSubscriptions(accessToken, allSubs, mikeId);
 };
 
 //Gets an App Access Token from twitch for the application.

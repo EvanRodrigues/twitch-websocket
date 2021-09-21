@@ -1,3 +1,5 @@
+const SocketServer = require("./socket");
+const { createServer } = require("http");
 const eventSub = require("./eventSub");
 const path = require("path");
 const express = require("express"),
@@ -15,6 +17,9 @@ app.use("/", (req, res) => {
     res.sendFile(path.join(__dirname + "/public/index.html"));
 });
 
-app.listen(port);
+const httpServer = createServer(app);
+const socket = new SocketServer(httpServer);
+
+httpServer.listen(port);
 
 eventSub.init();
