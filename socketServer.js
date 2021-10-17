@@ -1,3 +1,5 @@
+let io;
+
 class SocketServer {
     constructor(server) {
         this.socket = require("socket.io")(server, {
@@ -16,4 +18,16 @@ class SocketServer {
     };
 }
 
-module.exports = SocketServer;
+module.exports = {
+    init: (server) => {
+        io = new SocketServer(server);
+    },
+    getIO: () => {
+        if (!io) {
+            throw new Error(
+                "must call .init(server) before you can call .getio()"
+            );
+        }
+        return io;
+    },
+};

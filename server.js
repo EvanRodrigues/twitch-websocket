@@ -1,4 +1,3 @@
-const SocketServer = require("./socket");
 const { createServer } = require("http");
 const eventSub = require("./eventSub");
 const path = require("path");
@@ -18,7 +17,7 @@ app.use("/", (req, res) => {
 });
 
 const httpServer = createServer(app);
-const socket = new SocketServer(httpServer);
+require("./socketServer").init(httpServer);
 
 httpServer.listen(port);
 
