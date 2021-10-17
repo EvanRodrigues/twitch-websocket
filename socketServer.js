@@ -16,9 +16,12 @@ class SocketServer {
         this.socket.on("connection", (socket) => {
             const user = socket.handshake.query.user;
 
-            if (this.connections.has(user))
-                this.connections.get(user).push(socket);
-            else this.connections.set(user, [socket]);
+            if (this.connections.has(user)) {
+                if (this.connections.get(user).indexOf(socket) === -1)
+                    this.connections.get(user).push(socket);
+            } else {
+                this.connections.set(user, [socket]);
+            }
 
             console.log("A user has connected!");
 
